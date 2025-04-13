@@ -38,16 +38,18 @@ struct FileItem: Hashable, Identifiable, CustomStringConvertible {
 
 let data =
 FileItem(name: "users", children:
-            [FileItem(name: "user1234", children:
-                        [FileItem(name: "Photos", children:
+            [FileItem(name: "usezefoi jzefo ijzef ojizef ozeifj iozef jozef izeojr1234", children:
+                        [FileItem(name: "Phzefio jzeoi fjezjfo ij foeizfj ootos", children:
                                     [FileItem(name: "photo001.jpg"),
                                      FileItem(name: "photo002.jpg")]),
                          FileItem(name: "Movies", children:
                                     [FileItem(name: "movie001.mp4")]),
                          FileItem(name: "Documents", children: [])
                         ]),
-             FileItem(name: "newuser", children:
-                        [FileItem(name: "Documents", children: [])
+             FileItem(name: "IF-MIB::ifOperStatus", children:
+                        [FileItem(name: "IF-MIB::ifOperStatus[10103]", children: []),
+                         FileItem(name: "IF-MIB::ifOperStatus[10104]", children: []),
+                         FileItem(name: "IP-MIB::ipNetToPhysicalLastUpdated[4][ipv6][\"2a:01:0e:0a:02:5e:64:84:25:1b:5b:13:69:c0:2a:02\"]", children: []),
                         ])
             ])
 
@@ -82,12 +84,16 @@ struct ContentView: View {
 
             Text("---")
 
-            
+            ScrollView {
+                OutlineGroup(SnmpModel.model.root, children: \.children) { item in
+                    Text("\(item.name)")
+                }
+            }
             
             Text("---")
 
             OutlineGroup(data, children: \.children) { item in
-                Text("\(item.description)")
+                Text("\(item.description)").font(.system(size: 8))
             }
 
         }
