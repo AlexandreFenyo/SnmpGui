@@ -48,4 +48,3 @@ class SnmpModel {
     func add(_ key: SnmpKey) {
     }
 }
-
