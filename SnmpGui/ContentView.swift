@@ -19,6 +19,11 @@ enum OIDType {
     case value
 }
 
+enum OIDParseError: Error {
+    case invalidString
+}
+
+
 class OIDNode {
     let type: OIDType
     let val: String
@@ -29,9 +34,43 @@ class OIDNode {
         self.val = val
         self.children = children
     }
-    
-    static func parse(_ str: String) -> OIDNode {
 
+    func findDirectChild(type: OIDType, val: String) -> OIDNode? {
+        for child in children {
+            if child.type == type && child.val == val {
+                return child
+            }
+        }
+        return nil
+    }
+
+    // les deux doivent avoir la même racine
+    func mergeSingleOID(_ new_oid: OIDNode) {
+        if new_oid.type != type || new_oid.val != val {
+            print("ERROR")
+            exit(0)
+        }
+        
+        guard let new_oid_child = new_oid.children.first else {
+            return
+        }
+        if let tree_child = findDirectChild(type: new_oid_child.type, val: new_oid_child.val) {
+            tree_child.mergeSingleOID(new_oid_child)
+        } else {
+            children.append(new_oid_child)
+        }
+    }
+
+    static func parse(_ str: String) -> OIDNode {
+        do {
+            return OIDNode(type: .root, val: "", children: [try _parse(str)])
+        } catch {
+            print("ERROR")
+            return OIDNode(type: .root, val: "")
+        }
+    }
+
+    static func _parse(_ str: String) throws(OIDParseError) -> OIDNode {
         let charactersToFind: Set<Character> = [":", "[", ".", " "]
 
         if let idx = str.firstIndex(where: { charactersToFind.contains($0) }) {
@@ -39,22 +78,22 @@ class OIDNode {
                 let next_index = str.index(idx, offsetBy: 2)
                 let next_str = str[next_index...]
                 let val = str[..<idx]
-                return OIDNode(type: .mib, val: String(val), children: [parse(String(next_str))])
+                return OIDNode(type: .mib, val: String(val), children: [try _parse(String(next_str))])
             }
             if str[idx] == "[" {
                 let idx_1 = str.index(after: idx)
                 let key_str_to_end = str[idx_1...]
                 guard let key_last_index = key_str_to_end.firstIndex(of: "]") else {
-                    return OIDNode(type: .number, val: "parse snmp SHOULD NOT BE HERE 1")
+                    throw .invalidString
                 }
                 let key_last_index_1 = key_str_to_end.index(after: key_last_index)
                 let val = key_str_to_end[..<key_last_index]
                 let next_str = key_str_to_end[key_last_index_1...]
                 if idx == str.startIndex {
-                    return OIDNode(type: .key, val: String(val), children: [parse(String(next_str))])
+                    return OIDNode(type: .key, val: String(val), children: [try _parse(String(next_str))])
                 } else {
                     let is_number = NumberFormatter().number(from: String(str[..<idx])) != nil
-                    return OIDNode(type: is_number ? .number : .name, val: String(str[..<idx]), children: [OIDNode(type: .key, val: String(val), children: [parse(String(next_str))])])
+                    return OIDNode(type: is_number ? .number : .name, val: String(str[..<idx]), children: [OIDNode(type: .key, val: String(val), children: [try _parse(String(next_str))])])
                 }
             }
             if str[idx] == "." {
@@ -62,7 +101,7 @@ class OIDNode {
                 let next_str = str[next_index...]
                 let val = str[..<idx]
                 let is_number = NumberFormatter().number(from: String(val)) != nil
-                return OIDNode(type: is_number ? .number : .name, val: String(val), children: [parse(String(next_str))])
+                return OIDNode(type: is_number ? .number : .name, val: String(val), children: [try _parse(String(next_str))])
             }
             if str[idx] == " " {
                 let next_index = str.index(idx, offsetBy: 3)
@@ -76,11 +115,16 @@ class OIDNode {
                 }
             }
             
-        } else {
-            print("Aucun des caractères spécifiés n'a été trouvé dans la chaîne.")
         }
 
-        return OIDNode(type: .number, val: "parse snmp SHOULD NOT BE HERE 1")
+        throw .invalidString
+    }
+
+    func dumpTree(_ level: Int = 0) {
+        print("\(String.init(repeating: "-", count: level))\(type == .root ? "ROOT" : val)")
+        for child in children {
+            child.dumpTree(level + 1)
+        }
     }
     
     func getSingleLevelDescription() -> String {

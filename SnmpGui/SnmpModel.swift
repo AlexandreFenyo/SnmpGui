@@ -31,31 +31,51 @@ class SnmpModel {
         // parser le fichier de valeurs snmpwalk.txt
         let filepath = Bundle.main.path(forResource: "snmpwalk", ofType: "txt")!
 
+        /*
         print("DEBUT")
-
-        let oid = OIDNode.parse("IP-MIB::ipAddressPrefixAutonomousFlag.2.3[4][ipv6][\"2a:01:0e:0a:02:5e:64:84:00:00:00:00:00:00:00:00\"][64] = INTEGER: true(1)")
+        let oid1 = OIDNode.parse("IP-MIB::1 = foo")
+        let oid2 = OIDNode.parse("IP-MIB::2 = bar")
+        oid1.merge(oid2)
         print("FIN")
-        print("\(oid.getSingleLineDescription())")
+        oid1.dumpTree()
         exit(0)
+        */
+        
+        //        oid.merge(OIDNode.parse("IP-MIB::ipAddressPrefixAutonomousFlag.2.3[4][ipv4][\"2a:01:0e:0a:02:5e:64:84:00:00:00:00:00:00:00:00\"][64] = INTEGER: true(1)"))
+//        print("\(oid3.getSingleLineDescription())")
+//        oid.dumpTree()
+//        exit(0)
+        var cnt = 0
+
+        let oid = OIDNode(type: .root, val: "")
         
         if let fileHandle = FileHandle(forReadingAtPath: filepath) {
             let fileData = fileHandle.readDataToEndOfFile()
             if let fileContent = String(data: fileData, encoding: .isoLatin1) {
                 fileContent.enumerateLines { line, _ in
-                    
                     print(line)
-                    if let mibname_end_index: Range<String.Index> = line.range(of: "::") {
-                        let mibname = String(line[..<mibname_end_index.lowerBound])
-                        
-                        
+                    cnt += 1
+                    oid.mergeSingleOID(OIDNode.parse(line))
+                    
+                    if cnt == 1200 /* pb à 907 */ {
+                        print("FIN")
+                        oid.dumpTree()
+                        exit(0)
                     }
-
+                    
                 }
             }
             fileHandle.closeFile()
         } else {
             print("Le fichier n'existe pas à l'emplacement spécifié.")
         }
+        
+        
+        
+        
+        
+        
+        
         
         root = SnmpKey(name: ".1")
         root.addChild(SnmpKey(name: "SNMPv2-MIB::"))
