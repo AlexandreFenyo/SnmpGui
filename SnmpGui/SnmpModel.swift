@@ -28,6 +28,35 @@ class SnmpModel {
     var root: SnmpKey
 
     init() {
+        // parser le fichier de valeurs snmpwalk.txt
+        let filepath = Bundle.main.path(forResource: "snmpwalk", ofType: "txt")!
+
+        print("DEBUT")
+
+        let oid = OIDNode.parse("IP-MIB::ipAddressPrefixAutonomousFlag.2.3[4][ipv6][\"2a:01:0e:0a:02:5e:64:84:00:00:00:00:00:00:00:00\"][64] = INTEGER: true(1)")
+        print("FIN")
+        print("\(oid.getSingleLineDescription())")
+        exit(0)
+        
+        if let fileHandle = FileHandle(forReadingAtPath: filepath) {
+            let fileData = fileHandle.readDataToEndOfFile()
+            if let fileContent = String(data: fileData, encoding: .isoLatin1) {
+                fileContent.enumerateLines { line, _ in
+                    
+                    print(line)
+                    if let mibname_end_index: Range<String.Index> = line.range(of: "::") {
+                        let mibname = String(line[..<mibname_end_index.lowerBound])
+                        
+                        
+                    }
+
+                }
+            }
+            fileHandle.closeFile()
+        } else {
+            print("Le fichier n'existe pas à l'emplacement spécifié.")
+        }
+        
         root = SnmpKey(name: ".1")
         root.addChild(SnmpKey(name: "SNMPv2-MIB::"))
 
