@@ -26,29 +26,15 @@ class SnmpModel {
     static let model = SnmpModel()
 
     var root: SnmpKey
+    var oid_root: OIDNode
+    var oid_root2: OIDNode2 = OIDNode2(type: .root, val: "")
 
     init() {
         // parser le fichier de valeurs snmpwalk.txt
         let filepath = Bundle.main.path(forResource: "snmpwalk", ofType: "txt")!
 
-        /*
-        print("DEBUT")
-        let oid1 = OIDNode.parse("IP-MIB::1 = foo")
-        let oid2 = OIDNode.parse("IP-MIB::2 = bar")
-        oid1.merge(oid2)
-        print("FIN")
-        oid1.dumpTree()
-        exit(0)
-        */
-        
-        //        oid.merge(OIDNode.parse("IP-MIB::ipAddressPrefixAutonomousFlag.2.3[4][ipv4][\"2a:01:0e:0a:02:5e:64:84:00:00:00:00:00:00:00:00\"][64] = INTEGER: true(1)"))
-//        print("\(oid3.getSingleLineDescription())")
-//        oid.dumpTree()
-//        exit(0)
         var cnt = 0
-
         let oid = OIDNode(type: .root, val: "")
-        
         if let fileHandle = FileHandle(forReadingAtPath: filepath) {
             let fileData = fileHandle.readDataToEndOfFile()
             if let fileContent = String(data: fileData, encoding: .isoLatin1) {
@@ -56,19 +42,44 @@ class SnmpModel {
                     print(line)
                     cnt += 1
                     oid.mergeSingleOID(OIDNode.parse(line))
-                    
+                    /*
                     if cnt == 1200 /* pb à 907 */ {
                         print("FIN")
                         oid.dumpTree()
                         exit(0)
-                    }
-                    
+                    }*/
                 }
             }
             fileHandle.closeFile()
         } else {
             print("Le fichier n'existe pas à l'emplacement spécifié.")
         }
+        oid_root = oid
+
+        
+        cnt = 0
+        let oid2 = OIDNode2(type: .root, val: "")
+        if let fileHandle = FileHandle(forReadingAtPath: filepath) {
+            let fileData = fileHandle.readDataToEndOfFile()
+            if let fileContent = String(data: fileData, encoding: .isoLatin1) {
+                fileContent.enumerateLines { line, _ in
+                    print(line)
+                    cnt += 1
+                    oid2.mergeSingleOID(OIDNode2.parse(line))
+                    /*
+                    if cnt == 1200 /* pb à 907 */ {
+                        print("FIN")
+                        oid.dumpTree()
+                        exit(0)
+                    }*/
+                }
+            }
+            fileHandle.closeFile()
+        } else {
+            print("Le fichier n'existe pas à l'emplacement spécifié.")
+        }
+        oid_root2 = oid2
+
         
         
         
