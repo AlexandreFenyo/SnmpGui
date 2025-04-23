@@ -38,5 +38,6 @@ class SnmpModel {
         } else {
             print("Le fichier n'existe pas à l'emplacement spécifié.")
         }
+        oid_root.merge()
     }
 }

@@ -21,8 +21,8 @@ enum OIDParseError: Error {
 }
 
 class OIDNode: Identifiable {
-    let type: OIDType
-    let val: String
+    var type: OIDType
+    var val: String
     var children: [OIDNode]? // ne jamais le mettre à nil: il doit être nillable à cause du OutlineGroup qui l'impose, mais on ne le rend jamais nil et on se permet donc de le déréférencer quand on veut
     
     init(type: OIDType, val: String, children: [OIDNode] = []) {
@@ -115,6 +115,39 @@ class OIDNode: Identifiable {
 
         throw .invalidString
     }
+    
+    func merge() {
+        if children!.count == 1 {
+            let single_child = children!.first!
+            children = children!.first!.children
+            switch type {
+            case .root:
+                val = "\(val).\(single_child.getSingleLevelDescription())"
+                break
+            case .mib:
+                val = "\(val)::\(single_child.getSingleLevelDescription())"
+                break
+            case .name:
+                val = "\(val).\(single_child.getSingleLevelDescription())"
+                break
+            case .number:
+                val = "\(val).\(single_child.getSingleLevelDescription())"
+                break
+            case .key:
+                val = "[\(val)]\(single_child.getSingleLevelDescription())"
+                break
+            case .value:
+                val = "merge() SHOULD NOT BE HERE"
+                break
+            }
+            type = .name
+            merge()
+        } else {
+            for child in children! {
+                child.merge()
+            }
+        }
+    }
 
     func dumpTree(_ level: Int = 0) {
         print("\(String.init(repeating: "-", count: level))\(type == .root ? "ROOT" : val)")
@@ -155,4 +188,3 @@ class OIDNode: Identifiable {
         }
     }
 }
-
