@@ -18,14 +18,14 @@ class SnmpModel {
         let filepath = Bundle.main.path(forResource: "snmpwalk", ofType: "txt")!
 
         var cnt = 0
-        let oid2 = OIDNode(type: .root, val: "")
+        oid_root = OIDNode(type: .root, val: "")
         if let fileHandle = FileHandle(forReadingAtPath: filepath) {
             let fileData = fileHandle.readDataToEndOfFile()
             if let fileContent = String(data: fileData, encoding: .isoLatin1) {
                 fileContent.enumerateLines { line, _ in
                     print(line)
                     cnt += 1
-                    oid2.mergeSingleOID(OIDNode.parse(line))
+                    self.oid_root.mergeSingleOID(OIDNode.parse(line))
                     /*
                     if cnt == 1200 /* pb à 907 */ {
                         print("FIN")
@@ -38,6 +38,5 @@ class SnmpModel {
         } else {
             print("Le fichier n'existe pas à l'emplacement spécifié.")
         }
-        oid_root = oid2
     }
 }
