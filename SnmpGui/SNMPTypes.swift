@@ -21,6 +21,7 @@ enum OIDParseError: Error {
 }
 
 class OIDNodeDisplayable: Identifiable {
+    var line: String
     var type: OIDType
     var val: String
     // OutlineGroup impose que children soit nillable
@@ -28,11 +29,12 @@ class OIDNodeDisplayable: Identifiable {
     var subnodes: [OIDNodeDisplayable]
     weak var parent: OIDNodeDisplayable?
 
-    init(type: OIDType, val: String, children: [OIDNodeDisplayable]? = nil, subnodes: [OIDNodeDisplayable] = [], parent: OIDNodeDisplayable? = nil) {
+    init(type: OIDType, val: String, children: [OIDNodeDisplayable]? = nil, subnodes: [OIDNodeDisplayable] = [], parent: OIDNodeDisplayable? = nil, line: String = "") {
         self.type = type
         self.val = val
         self.children = children
         self.subnodes = subnodes
+        self.line = line
     }
 
     func getLevel() -> Int {
@@ -80,27 +82,29 @@ class OIDNodeDisplayable: Identifiable {
 }
 
 class OIDNode {
+    var line: String
     let type: OIDType
     let val: String
     var children: [OIDNode]
 
-    init(type: OIDType, val: String, children: [OIDNode] = []) {
+    init(type: OIDType, val: String, children: [OIDNode] = [], line: String = "") {
         self.type = type
         self.val = val
         self.children = children
+        self.line = line
     }
 
     func getDisplayable() -> OIDNodeDisplayable {
         if children.isEmpty {
-            return OIDNodeDisplayable(type: type, val: val)
+            return OIDNodeDisplayable(type: type, val: val, line: line)
         }
         
-        let displayable_node = OIDNodeDisplayable(type: type, val: val)
+        let displayable_node = OIDNodeDisplayable(type: type, val: val, line: line)
 
         var displayable_subnodes = [OIDNodeDisplayable]()
         var current = self
         while current.children.count == 1 {
-            displayable_subnodes.append(OIDNodeDisplayable(type: current.children.first!.type, val: current.children.first!.val))
+            displayable_subnodes.append(OIDNodeDisplayable(type: current.children.first!.type, val: current.children.first!.val, line: current.children.first!.line))
             current = current.children.first!
         }
 
@@ -152,7 +156,7 @@ class OIDNode {
 
     static func parse(_ str: String) -> OIDNode {
         do {
-            return OIDNode(type: .root, val: "", children: [try _parse(str)])
+            return OIDNode(type: .root, val: "", children: [try _parse(str)], line: str)
         } catch {
             print("ERROR")
             return OIDNode(type: .root, val: "")
@@ -167,7 +171,7 @@ class OIDNode {
                 let next_index = str.index(idx, offsetBy: 2)
                 let next_str = str[next_index...]
                 let val = str[..<idx]
-                return OIDNode(type: .mib, val: String(val), children: [try _parse(String(next_str))])
+                return OIDNode(type: .mib, val: String(val), children: [try _parse(String(next_str))], line: str)
             }
             if str[idx] == "[" {
                 let idx_1 = str.index(after: idx)
@@ -179,10 +183,10 @@ class OIDNode {
                 let val = key_str_to_end[..<key_last_index]
                 let next_str = key_str_to_end[key_last_index_1...]
                 if idx == str.startIndex {
-                    return OIDNode(type: .key, val: String(val), children: [try _parse(String(next_str))])
+                    return OIDNode(type: .key, val: String(val), children: [try _parse(String(next_str))], line: str)
                 } else {
                     let is_number = NumberFormatter().number(from: String(str[..<idx])) != nil
-                    return OIDNode(type: is_number ? .number : .name, val: String(str[..<idx]), children: [OIDNode(type: .key, val: String(val), children: [try _parse(String(next_str))])])
+                    return OIDNode(type: is_number ? .number : .name, val: String(str[..<idx]), children: [OIDNode(type: .key, val: String(val), children: [try _parse(String(next_str))], line: str)], line: str)
                 }
             }
             if str[idx] == "." {
@@ -190,17 +194,17 @@ class OIDNode {
                 let next_str = str[next_index...]
                 let val = str[..<idx]
                 let is_number = NumberFormatter().number(from: String(val)) != nil
-                return OIDNode(type: is_number ? .number : .name, val: String(val), children: [try _parse(String(next_str))])
+                return OIDNode(type: is_number ? .number : .name, val: String(val), children: [try _parse(String(next_str))], line: str)
             }
             if str[idx] == " " {
                 let next_index = str.index(idx, offsetBy: 3)
                 let next_str = str[next_index...]
                 let val = next_str
                 if idx == str.startIndex {
-                    return OIDNode(type: .value, val: String(val))
+                    return OIDNode(type: .value, val: String(val), line: str)
                 } else {
                     let is_number = NumberFormatter().number(from: String(str[..<idx])) != nil
-                    return OIDNode(type: is_number ? .number : .name, val: String(str[..<idx]), children: [OIDNode(type: .value, val: String(val))])
+                    return OIDNode(type: is_number ? .number : .name, val: String(str[..<idx]), children: [OIDNode(type: .value, val: String(val), line: str)], line: str)
                 }
             }
             

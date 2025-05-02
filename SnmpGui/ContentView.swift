@@ -26,31 +26,29 @@ struct ContentView: View {
                     } else {
                         // No children
                         HStack(alignment: .top) {
-                            Image(systemName: "doc.text")
-                                .foregroundColor(.blue)
-                                .padding(.trailing, 5)
-                            HStack(alignment: .top) {
+                            VStack {
+                                Image(systemName: "doc.text")
+                                    .foregroundColor(.blue)
+                                    .padding(.trailing, 5)
+                            }
+                            VStack {
                                 HStack(alignment: .top) {
                                     Text(item.getDisplayValAndSubValues())
                                         .font(.subheadline)
                                         .foregroundColor(.secondary)
-                                    Spacer()
-                                }
-                                HStack {
                                     Spacer()
                                     Text(item.subnodes.last?.val ?? "ERREUR").font(.subheadline)
                                         .foregroundColor(.red)
                                         .multilineTextAlignment(.trailing)
                                 }
                             }
-                            
                         }
-                        
-                            }
-                    
+                        .onTapGesture {
+                            print(item.line)
+                        }
+                    }
                 }
-            }//.font(.system(size: 10))
-            
+            }
         }
     }
 }
