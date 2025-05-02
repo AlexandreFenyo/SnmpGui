@@ -41,13 +41,13 @@ class OIDNodeDisplayable: Identifiable {
         }
         return 0
     }
-    
-    func getSingleLevelDescription() -> String {
+
+    func getDisplayVal() -> String {
         var description = ""
         
         switch type {
         case .root:
-            description = "ROOT"
+            description = "SNMP OID Tree"
         case .mib, .name, .number:
             description = val
         case .key:
@@ -56,8 +56,23 @@ class OIDNodeDisplayable: Identifiable {
             description = val
         }
         
-        for subnode in subnodes {
-            description += "(\(subnode.getSingleLevelDescription()))"
+        return description
+    }
+    
+    func getDisplayValAndSubValues() -> String {
+        var description = getDisplayVal()
+
+        for i in 0..<subnodes.count {
+            var subnode_descr: String
+            let subnode = subnodes[i]
+            if subnode.type != .key {
+                subnode_descr = ".\(subnode.getDisplayVal())"
+            } else {
+                subnode_descr = "\(subnode.getDisplayVal())"
+            }
+            if subnode.type != .value {
+                description = "\(description)\(subnode_descr)"
+            }
         }
         
         return description

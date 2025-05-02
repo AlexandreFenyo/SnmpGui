@@ -13,20 +13,44 @@ import SwiftUI
 struct ContentView: View {
     var body: some View {
         VStack {
-            ScrollView {
+            List {
                 OutlineGroup(SnmpModel.model.oid_root_displayable, children: \.children) { item in
-                    VStack {
-
-                        Text(item.val == "" ? "ROOT" : item.val)
-
-                        ForEach(item.subnodes) { subnode in
-                            Text(subnode.getSingleLevelDescription())
+                    if let _ = item.children {
+                        HStack {
+                            Image(systemName: "folder")
+                                .foregroundColor(.orange)
+                            Text(item.getDisplayValAndSubValues())
+                                .font(.subheadline)
+                                .foregroundColor(.primary)
                         }
-                    }.border(Color.gray)
+                    } else {
+                        // No children
+                        HStack(alignment: .top) {
+                            Image(systemName: "doc.text")
+                                .foregroundColor(.blue)
+                                .padding(.trailing, 5)
+                            HStack(alignment: .top) {
+                                HStack(alignment: .top) {
+                                    Text(item.getDisplayValAndSubValues())
+                                        .font(.subheadline)
+                                        .foregroundColor(.secondary)
+                                    Spacer()
+                                }
+                                HStack {
+                                    Spacer()
+                                    Text(item.subnodes.last?.val ?? "ERREUR").font(.subheadline)
+                                        .foregroundColor(.red)
+                                        .multilineTextAlignment(.trailing)
+                                }
+                            }
+                            
+                        }
+                        
+                            }
+                    
                 }
-            }.font(.system(size: 10))
-
+            }//.font(.system(size: 10))
+            
         }
-        .padding()
     }
 }

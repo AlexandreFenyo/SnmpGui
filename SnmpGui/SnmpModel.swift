@@ -41,5 +41,6 @@ class SnmpModel {
         }
         
         oid_root_displayable = oid_root.getDisplayable()
+        oid_root_displayable.val = "SNMP OID Tree"
     }
 }
