@@ -14,7 +14,7 @@ struct ContentView: View {
     var body: some View {
         VStack {
             ScrollView {
-                OutlineGroup(SnmpModel.model.oid_root, children: \.children) { item in
+                OutlineGroup(SnmpModel.model.oid_root_displayable, children: \.children) { item in
                     Text("\(item.getSingleLevelDescription())").font(.system(size: 8))
                 }
             }

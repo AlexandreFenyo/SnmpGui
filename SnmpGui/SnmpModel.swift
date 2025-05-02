@@ -12,6 +12,7 @@ class SnmpModel {
     static let model = SnmpModel()
 
     var oid_root: OIDNode = OIDNode(type: .root, val: "")
+    var oid_root_displayable: OIDNodeDisplayable = OIDNodeDisplayable(type: .root, val: "")
 
     init() {
         // parser le fichier de valeurs snmpwalk.txt
@@ -38,6 +39,7 @@ class SnmpModel {
         } else {
             print("Le fichier n'existe pas à l'emplacement spécifié.")
         }
-        oid_root.merge()
+        
+        oid_root_displayable = oid_root.getDisplayable()
     }
 }

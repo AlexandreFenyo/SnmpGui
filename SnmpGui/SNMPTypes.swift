@@ -20,19 +20,90 @@ enum OIDParseError: Error {
     case invalidString
 }
 
-class OIDNode: Identifiable {
+class OIDNodeDisplayable: Identifiable {
     var type: OIDType
     var val: String
-    var children: [OIDNode]? // ne jamais le mettre à nil: il doit être nillable à cause du OutlineGroup qui l'impose, mais on ne le rend jamais nil et on se permet donc de le déréférencer quand on veut
+    // OutlineGroup impose que children soit nillable
+    var children: [OIDNodeDisplayable]?
+    var subnodes: [OIDNodeDisplayable]
+    weak var parent: OIDNodeDisplayable?
+
+    init(type: OIDType, val: String, children: [OIDNodeDisplayable]? = nil, subnodes: [OIDNodeDisplayable] = [], parent: OIDNodeDisplayable? = nil) {
+        self.type = type
+        self.val = val
+        self.children = children
+        self.subnodes = subnodes
+    }
     
+    func getSingleLevelDescription() -> String {
+        var description = ""
+        
+        switch type {
+        case .root:
+            description = "ROOT"
+        case .mib, .name, .number:
+            description = val
+        case .key:
+            description = "[\(val)]"
+        case .value:
+            description = val
+        }
+        
+        for subnode in subnodes {
+            description += "(\(subnode.getSingleLevelDescription()))"
+        }
+        
+        return description
+    }
+}
+
+class OIDNode {
+    let type: OIDType
+    let val: String
+    var children: [OIDNode]
+
     init(type: OIDType, val: String, children: [OIDNode] = []) {
         self.type = type
         self.val = val
         self.children = children
     }
 
+    func getDisplayable() -> OIDNodeDisplayable {
+        if children.isEmpty {
+            return OIDNodeDisplayable(type: type, val: val)
+        }
+        
+        let displayable_node = OIDNodeDisplayable(type: type, val: val)
+
+        var displayable_subnodes = [OIDNodeDisplayable]()
+        var current = self
+        while current.children.count == 1 {
+            displayable_subnodes.append(OIDNodeDisplayable(type: current.children.first!.type, val: current.children.first!.val))
+            current = current.children.first!
+        }
+
+        displayable_subnodes.first?.parent = displayable_node
+        if displayable_subnodes.count > 1 {
+            for id in 1..<displayable_subnodes.count {
+                displayable_subnodes[id].parent = displayable_subnodes[id - 1]
+            }
+        }
+        
+        var displayable_children = [OIDNodeDisplayable]()
+        for child in current.children {
+            let displayable_child = child.getDisplayable()
+            displayable_child.parent = displayable_node
+            displayable_children.append(displayable_child)
+        }
+        
+        displayable_node.children = displayable_children
+        displayable_node.subnodes = displayable_subnodes
+
+        return displayable_node
+    }
+    
     func findDirectChild(type: OIDType, val: String) -> OIDNode? {
-        for child in children! {
+        for child in children {
             if child.type == type && child.val == val {
                 return child
             }
@@ -47,13 +118,13 @@ class OIDNode: Identifiable {
             exit(0)
         }
         
-        guard let new_oid_child = new_oid.children!.first else {
+        guard let new_oid_child = new_oid.children.first else {
             return
         }
         if let tree_child = findDirectChild(type: new_oid_child.type, val: new_oid_child.val) {
             tree_child.mergeSingleOID(new_oid_child)
         } else {
-            children!.append(new_oid_child)
+            children.append(new_oid_child)
         }
     }
 
@@ -116,42 +187,9 @@ class OIDNode: Identifiable {
         throw .invalidString
     }
     
-    func merge() {
-        if children!.count == 1 {
-            let single_child = children!.first!
-            children = children!.first!.children
-            switch type {
-            case .root:
-                val = "\(val).\(single_child.getSingleLevelDescription())"
-                break
-            case .mib:
-                val = "\(val)::\(single_child.getSingleLevelDescription())"
-                break
-            case .name:
-                val = "\(val).\(single_child.getSingleLevelDescription())"
-                break
-            case .number:
-                val = "\(val).\(single_child.getSingleLevelDescription())"
-                break
-            case .key:
-                val = "[\(val)]\(single_child.getSingleLevelDescription())"
-                break
-            case .value:
-                val = "merge() SHOULD NOT BE HERE"
-                break
-            }
-            type = .name
-            merge()
-        } else {
-            for child in children! {
-                child.merge()
-            }
-        }
-    }
-
     func dumpTree(_ level: Int = 0) {
         print("\(String.init(repeating: "-", count: level))\(type == .root ? "ROOT" : val)")
-        for child in children! {
+        for child in children {
             child.dumpTree(level + 1)
         }
     }
@@ -172,17 +210,17 @@ class OIDNode: Identifiable {
     func getSingleLineDescription() -> String {
         switch type {
         case .root:
-            return children!.first?.getSingleLineDescription() ?? ""
+            return children.first?.getSingleLineDescription() ?? ""
         case .mib:
-            return "\(val)::\(children!.first?.getSingleLineDescription() ?? "")"
+            return "\(val)::\(children.first?.getSingleLineDescription() ?? "")"
         case .name, .number:
-            if children!.first?.type == .name || children!.first?.type == .number {
-                return "\(val).\(children!.first?.getSingleLineDescription() ?? "")"
+            if children.first?.type == .name || children.first?.type == .number {
+                return "\(val).\(children.first?.getSingleLineDescription() ?? "")"
             } else {
-                return "\(val)\(children!.first?.getSingleLineDescription() ?? "")"
+                return "\(val)\(children.first?.getSingleLineDescription() ?? "")"
             }
         case .key:
-            return "[\(val)]\(children!.first?.getSingleLineDescription() ?? "")"
+            return "[\(val)]\(children.first?.getSingleLineDescription() ?? "")"
         case .value:
             return " = \(val)"
         }
