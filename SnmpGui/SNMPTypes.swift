@@ -34,6 +34,13 @@ class OIDNodeDisplayable: Identifiable {
         self.children = children
         self.subnodes = subnodes
     }
+
+    func getLevel() -> Int {
+        if let parent = parent {
+            return parent.getLevel() + 1
+        }
+        return 0
+    }
     
     func getSingleLevelDescription() -> String {
         var description = ""
@@ -96,7 +103,7 @@ class OIDNode {
             displayable_children.append(displayable_child)
         }
         
-        displayable_node.children = displayable_children
+        displayable_node.children = displayable_children.isEmpty ? nil : displayable_children
         displayable_node.subnodes = displayable_subnodes
 
         return displayable_node

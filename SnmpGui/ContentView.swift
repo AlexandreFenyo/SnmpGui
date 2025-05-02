@@ -15,9 +15,16 @@ struct ContentView: View {
         VStack {
             ScrollView {
                 OutlineGroup(SnmpModel.model.oid_root_displayable, children: \.children) { item in
-                    Text("\(item.getSingleLevelDescription())").font(.system(size: 8))
+                    VStack {
+
+                        Text(item.val == "" ? "ROOT" : item.val)
+
+                        ForEach(item.subnodes) { subnode in
+                            Text(subnode.getSingleLevelDescription())
+                        }
+                    }.border(Color.gray)
                 }
-            }
+            }.font(.system(size: 10))
 
         }
         .padding()
