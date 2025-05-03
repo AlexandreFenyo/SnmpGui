@@ -20,7 +20,7 @@ enum OIDParseError: Error {
     case invalidString
 }
 
-class OIDNodeDisplayable: Identifiable {
+class OIDNodeDisplayable: Identifiable/*, ObservableObject*/ {
     var line: String
     var type: OIDType
     var val: String

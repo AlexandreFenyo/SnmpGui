@@ -12,7 +12,7 @@ class SnmpModel {
     static let model = SnmpModel()
 
     var oid_root: OIDNode = OIDNode(type: .root, val: "")
-    var oid_root_displayable: OIDNodeDisplayable = OIDNodeDisplayable(type: .root, val: "")
+    /*@Published*/ var oid_root_displayable: OIDNodeDisplayable = OIDNodeDisplayable(type: .root, val: "")
 
     init() {
         // parser le fichier de valeurs snmpwalk.txt

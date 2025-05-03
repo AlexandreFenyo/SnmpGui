@@ -11,8 +11,18 @@ import SwiftUI
 // fenyo@mac ~ % snmpwalk -v2c -OT -OX -c public 192.168.0.254 > /tmp/snmpwalk.res
 
 struct ContentView: View {
+    @State private var text: String = ""
+    
     var body: some View {
         VStack {
+            Button {
+//                SnmpModel.model.oid_root_displayable = OIDNodeDisplayable(type: .root, val: "")
+                SnmpModel.model.oid_root_displayable.children?.first?.val = "ddx"
+//                SnmpModel.model.oid_root.getDisplayable()
+            } label: {
+                Text("Collapse everything")
+            }
+            
             List {
                 OutlineGroup(SnmpModel.model.oid_root_displayable, children: \.children) { item in
                     if let _ = item.children {
