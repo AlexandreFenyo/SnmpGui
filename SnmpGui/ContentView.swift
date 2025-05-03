@@ -37,8 +37,6 @@ struct OIDTreeView: View {
             .onTapGesture {
                 print(node.line)
             }
-            
-            
         }
         else {
             // children exist
@@ -70,13 +68,9 @@ struct ContentView: View {
             Button("Reload") {
                 rootNode.children?.removeAll()
             }
-            NavigationView {
-                List {
-                    OIDTreeView(node: rootNode)
-                }
-                .navigationTitle("Arbre")
+            List {
+                OIDTreeView(node: rootNode)
             }
-            
         }
     }
 }
