@@ -7,15 +7,15 @@
 
 import SwiftUI
 
-@main
-struct SnmpGuiApp: App {
+//@main
+struct XSnmpGuiApp: App {
     
     init() {
     }
     
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            XContentView()
         }
     }
 }

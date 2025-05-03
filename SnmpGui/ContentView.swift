@@ -10,7 +10,7 @@ import SwiftUI
 // https://developer.apple.com/documentation/swiftui/outlinegroup
 // fenyo@mac ~ % snmpwalk -v2c -OT -OX -c public 192.168.0.254 > /tmp/snmpwalk.res
 
-struct ContentView: View {
+struct XContentView: View {
     @State private var text: String = ""
     
     var body: some View {
