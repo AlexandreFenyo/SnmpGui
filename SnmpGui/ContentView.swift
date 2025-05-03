@@ -10,55 +10,73 @@ import SwiftUI
 // https://developer.apple.com/documentation/swiftui/outlinegroup
 // fenyo@mac ~ % snmpwalk -v2c -OT -OX -c public 192.168.0.254 > /tmp/snmpwalk.res
 
-struct XContentView: View {
-    @State private var text: String = ""
+struct OIDTreeView: View {
+    @ObservedObject var node: OIDNodeDisplayable
     
     var body: some View {
-        VStack {
-            Button {
-//                SnmpModel.model.oid_root_displayable = OIDNodeDisplayable(type: .root, val: "")
-                SnmpModel.model.oid_root_displayable.children?.first?.val = "ddx"
-//                SnmpModel.model.oid_root.getDisplayable()
-            } label: {
-                Text("Collapse everything")
-            }
-            
-            List {
-                OutlineGroup(SnmpModel.model.oid_root_displayable, children: \.children) { item in
-                    if let _ = item.children {
-                        HStack {
-                            Image(systemName: "folder")
-                                .foregroundColor(.orange)
-                            Text(item.getDisplayValAndSubValues())
-                                .font(.subheadline)
-                                .foregroundColor(.primary)
-                        }
-                    } else {
-                        // No children
-                        HStack(alignment: .top) {
-                            VStack {
-                                Image(systemName: "doc.text")
-                                    .foregroundColor(.blue)
-                                    .padding(.trailing, 5)
-                            }
-                            VStack {
-                                HStack(alignment: .top) {
-                                    Text(item.getDisplayValAndSubValues())
-                                        .font(.subheadline)
-                                        .foregroundColor(.secondary)
-                                    Spacer()
-                                    Text(item.subnodes.last?.val ?? "ERREUR").font(.subheadline)
-                                        .foregroundColor(.red)
-                                        .multilineTextAlignment(.trailing)
-                                }
-                            }
-                        }
-                        .onTapGesture {
-                            print(item.line)
-                        }
+        if node.children == nil || node.children?.isEmpty == true {
+            // no children
+            HStack(alignment: .top) {
+                VStack {
+                    Image(systemName: "doc.text")
+                        .foregroundColor(.blue)
+                    // .padding(.trailing, 5)
+                }
+                VStack {
+                    HStack(alignment: .top) {
+                        Text(node.getDisplayValAndSubValues())
+                            .font(.subheadline)
+                            .foregroundColor(.secondary)
+                        Spacer()
+                        Text(node.subnodes.last?.val ?? "empty val").font(.subheadline)
+                            .foregroundColor(.red)
+                            .multilineTextAlignment(.trailing)
                     }
                 }
             }
+            .onTapGesture {
+                print(node.line)
+            }
+            
+            
+        }
+        else {
+            // children exist
+            DisclosureGroup(isExpanded: $node.isExpanded, content: {
+                if let children = node.children {
+                    ForEach(children) { child in
+                        OIDTreeView(node: child)
+                    }
+                }
+            }) {
+                HStack {
+                    Image(systemName: "folder")
+                        .foregroundColor(.orange)
+                    Text(node.getDisplayValAndSubValues())
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                }
+            }
+        }
+    }
+}
+
+struct ContentView: View {
+    @State private var text: String = ""
+    @StateObject var rootNode: OIDNodeDisplayable
+    
+    var body: some View {
+        VStack {
+            Button("Reload") {
+                rootNode.children?.removeAll()
+            }
+            NavigationView {
+                List {
+                    OIDTreeView(node: rootNode)
+                }
+                .navigationTitle("Arbre")
+            }
+            
         }
     }
 }

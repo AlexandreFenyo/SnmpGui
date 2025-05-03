@@ -20,13 +20,14 @@ enum OIDParseError: Error {
     case invalidString
 }
 
-class OIDNodeDisplayable: Identifiable/*, ObservableObject*/ {
+class OIDNodeDisplayable: Identifiable, ObservableObject {
     var line: String
-    var type: OIDType
-    var val: String
+    @Published var type: OIDType
+    @Published var val: String
     // OutlineGroup impose que children soit nillable
-    var children: [OIDNodeDisplayable]?
-    var subnodes: [OIDNodeDisplayable]
+    @Published var children: [OIDNodeDisplayable]?
+    @Published var subnodes: [OIDNodeDisplayable]
+    @Published var isExpanded: Bool = true
     weak var parent: OIDNodeDisplayable?
 
     init(type: OIDType, val: String, children: [OIDNodeDisplayable]? = nil, subnodes: [OIDNodeDisplayable] = [], parent: OIDNodeDisplayable? = nil, line: String = "") {

@@ -33,6 +33,7 @@ struct TreeView: View {
     }
 }
 
+/*
 struct ContentView: View {
     @StateObject var rootNode: TreeNode
 
@@ -65,4 +66,4 @@ struct MyApp: App {
         return root
     }
 }
-
+*/

@@ -15,6 +15,7 @@ class SnmpModel {
     /*@Published*/ var oid_root_displayable: OIDNodeDisplayable = OIDNodeDisplayable(type: .root, val: "")
 
     init() {
+/*
         // parser le fichier de valeurs snmpwalk.txt
         let filepath = Bundle.main.path(forResource: "snmpwalk", ofType: "txt")!
 
@@ -42,5 +43,6 @@ class SnmpModel {
         
         oid_root_displayable = oid_root.getDisplayable()
         oid_root_displayable.val = "SNMP OID Tree"
+        */
     }
 }
