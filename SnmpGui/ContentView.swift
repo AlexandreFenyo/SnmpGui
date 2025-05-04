@@ -23,6 +23,7 @@ struct OIDTreeView: View {
                             .foregroundColor(.orange)
                     } else {
                         Image(systemName: "doc.text")
+                            .padding(.trailing, 6)
                             .foregroundColor(.blue)
                     }
                 }
