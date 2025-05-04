@@ -26,10 +26,13 @@ class OIDNodeDisplayable: Identifiable, ObservableObject {
     @Published var val: String
     // OutlineGroup impose que children soit nillable
     @Published var children: [OIDNodeDisplayable]?
+    var children_backup: [OIDNodeDisplayable]?
     @Published var subnodes: [OIDNodeDisplayable]
     @Published var isExpanded: Bool = true
-    weak var parent: OIDNodeDisplayable?
+    @Published var isHidden: Bool = false
 
+    weak var parent: OIDNodeDisplayable?
+    
     init(type: OIDType, val: String, children: [OIDNodeDisplayable]? = nil, subnodes: [OIDNodeDisplayable] = [], parent: OIDNodeDisplayable? = nil, line: String = "") {
         self.type = type
         self.val = val
@@ -37,14 +40,119 @@ class OIDNodeDisplayable: Identifiable, ObservableObject {
         self.subnodes = subnodes
         self.line = line
     }
+    
+    func hide() {
+        if isHidden { return }
+        isHidden = true
 
-    func getLevel() -> Int {
-        if let parent = parent {
-            return parent.getLevel() + 1
+        guard let parent else {
+            return
         }
-        return 0
+        
+        if parent.children_backup == nil {
+            parent.children_backup = parent.children
+        }
+
+        if let parent_children = parent.children {
+            for i in 0..<parent_children.count {
+                if parent_children[i] === self {
+                    parent.children?.remove(at: i)
+                    return
+                }
+            }
+        }
     }
 
+    func restore() {
+        if !isHidden { return }
+        isHidden = false
+
+        guard let parent else {
+            return
+        }
+        
+        if parent.children_backup == nil {
+            return
+        }
+
+        var new_parent_children = [OIDNodeDisplayable]()
+        if let parent_children_backup = parent.children_backup {
+            for parent_child in parent_children_backup {
+                if parent_child.isHidden == false {
+                    new_parent_children.append(parent_child)
+                }
+            }
+        }
+        parent.children = new_parent_children
+    }
+
+    // renvoie true si doit apparaître car lui ou un de ses descendants matche le filtre
+    func filter(_ str: String) -> Bool {
+        if str.isEmpty {
+            restore()
+            guard let children_backup else {
+                return true
+            }
+            for child in children_backup {
+                _ = child.filter(str)
+            }
+            return true
+        } else {
+            var should_appear = false
+            
+            if children_backup == nil {
+                children_backup = children
+            }
+            
+            if let children_backup, children_backup.isEmpty == false {
+                // children exist
+                for child in children_backup {
+                    if child.filter(str) {
+                        should_appear = true
+                    }
+                }
+                if getDisplayValAndSubValues().lowercased().contains(str.lowercased()) {
+                    should_appear = true
+                }
+            }
+            else {
+                // no child
+                if getDisplayValAndSubValues().lowercased().contains(str.lowercased()) {
+                    should_appear = true
+                }
+                if let foo = subnodes.last {
+                    if foo.val.lowercased().contains(str.lowercased()) {
+                        should_appear = true
+                    }
+                }
+            }
+            if should_appear {
+                restore()
+            } else {
+                hide()
+            }
+            return should_appear
+        }
+    }
+    
+    func collapseAll() {
+        isExpanded = false
+        if let children {
+            for child in children {
+                child.collapseAll()
+            }
+        }
+    }
+    
+    func expandAll() {
+        isExpanded = true
+        if let children {
+            for child in children {
+                child.expandAll()
+            }
+        }
+    }
+    
     func getDisplayVal() -> String {
         var description = ""
         
@@ -64,7 +172,7 @@ class OIDNodeDisplayable: Identifiable, ObservableObject {
     
     func getDisplayValAndSubValues() -> String {
         var description = getDisplayVal()
-
+        
         for i in 0..<subnodes.count {
             var subnode_descr: String
             let subnode = subnodes[i]
@@ -79,6 +187,13 @@ class OIDNodeDisplayable: Identifiable, ObservableObject {
         }
         
         return description
+    }
+    
+    func getLevel() -> Int {
+        if let parent = parent {
+            return parent.getLevel() + 1
+        }
+        return 0
     }
 }
 

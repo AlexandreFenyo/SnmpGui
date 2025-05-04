@@ -15,22 +15,38 @@ struct OIDTreeView: View {
     
     var body: some View {
         if node.children == nil || node.children?.isEmpty == true {
-            // no children
+            // no child
             HStack(alignment: .top) {
                 VStack {
-                    Image(systemName: "doc.text")
-                        .foregroundColor(.blue)
-                    // .padding(.trailing, 5)
+                    if node.children_backup?.isEmpty == false {
+                        Image(systemName: "folder")
+                            .foregroundColor(.orange)
+                    } else {
+                        Image(systemName: "doc.text")
+                            .foregroundColor(.blue)
+                    }
                 }
                 VStack {
                     HStack(alignment: .top) {
-                        Text(node.getDisplayValAndSubValues())
-                            .font(.subheadline)
-                            .foregroundColor(.secondary)
-                        Spacer()
-                        Text(node.subnodes.last?.val ?? "empty val").font(.subheadline)
-                            .foregroundColor(.red)
-                            .multilineTextAlignment(.trailing)
+                        if node.children_backup?.isEmpty == false {
+                            Text(node.getDisplayValAndSubValues())
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                            Spacer()
+                            Text(node.subnodes.last?.val ?? "")
+                                .font(.headline)
+                                .foregroundColor(.primary)
+                                .multilineTextAlignment(.trailing)
+                        } else {
+                            Text(node.getDisplayValAndSubValues())
+                                .font(.subheadline)
+                                .foregroundColor(.secondary)
+                            Spacer()
+                            Text(node.subnodes.last?.val ?? "")
+                                .font(.subheadline)
+                                .foregroundColor(.red)
+                                .multilineTextAlignment(.trailing)
+                        }
                     }
                 }
             }
@@ -60,13 +76,38 @@ struct OIDTreeView: View {
 }
 
 struct ContentView: View {
-    @State private var text: String = ""
+    @State private var filter: String = ""
     @StateObject var rootNode: OIDNodeDisplayable
     
     var body: some View {
         VStack {
-            Button("Reload") {
-                rootNode.children?.removeAll()
+            TextField("Entrez du texte ici", text: $filter)
+                .autocorrectionDisabled(true)
+                .textFieldStyle(RoundedBorderTextFieldStyle())
+                .padding()
+                .onChange(of: filter) { oldValue, newValue in
+                    print("Texte saisi : \(newValue)")
+//                    rootNode.children?.first?.hide()
+                    rootNode.expandAll()
+                    _ = rootNode.filter(newValue)
+                }
+            
+            HStack {
+                Button("Reload") {
+                    withAnimation {
+                        rootNode.children?.removeAll()
+                    }
+                }.border(.black)
+                Button("expand all") {
+                    withAnimation(Animation.easeInOut(duration: 0.5)) {
+                        rootNode.expandAll()
+                    }
+                }.border(.black)
+                Button("collapse all") {
+                    withAnimation(Animation.easeInOut(duration: 0.5)) {
+                        rootNode.collapseAll()
+                    }
+                }.border(.black)
             }
             List {
                 OIDTreeView(node: rootNode)
