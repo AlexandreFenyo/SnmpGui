@@ -138,31 +138,42 @@ struct ContentView: View {
     
     var body: some View {
         VStack {
-            TextField("Saisissez un filtre ici...", text: $highlight)
-                .autocorrectionDisabled(true)
-                .textFieldStyle(RoundedBorderTextFieldStyle())
-                .padding()
-                .onChange(of: highlight) { oldValue, newValue in
-                    print("Texte saisi : \(newValue)")
-//                    rootNode.children?.first?.hide()
-                    rootNode.expandAll()
-                    _ = rootNode.filter(newValue)
-                }
-            
+            HStack {
+                Image(systemName: "magnifyingglass")
+                TextField("Saisissez un filtre ici...", text: $highlight)
+                    .autocorrectionDisabled(true)
+                    .textFieldStyle(RoundedBorderTextFieldStyle())
+                    .onChange(of: highlight) { oldValue, newValue in
+                        print("Texte saisi : \(newValue)")
+                        rootNode.expandAll()
+                        _ = rootNode.filter(newValue)
+                    }
+                
+                Spacer(minLength: 40)
+                
+                Button(action: {
+                    withAnimation(Animation.easeInOut(duration: 0.5)) {
+                        rootNode.expandAll()
+                    }
+                }, label: {
+                    Image(systemName: "arrow.up.left.and.arrow.down.right")
+                })
+                
+                Button(action: {
+                    withAnimation(Animation.easeInOut(duration: 0.5)) {
+                        rootNode.collapseAll()
+                        rootNode.isExpanded = true
+                    }
+                }, label: {
+                    Image(systemName: "arrow.down.right.and.arrow.up.left")
+                })
+                
+            }.padding(20)
+
             HStack {
                 Button("Reload") {
                     withAnimation {
                         rootNode.children?.removeAll()
-                    }
-                }.border(.black)
-                Button("expand all") {
-                    withAnimation(Animation.easeInOut(duration: 0.5)) {
-                        rootNode.expandAll()
-                    }
-                }.border(.black)
-                Button("collapse all") {
-                    withAnimation(Animation.easeInOut(duration: 0.5)) {
-                        rootNode.collapseAll()
                     }
                 }.border(.black)
             }
