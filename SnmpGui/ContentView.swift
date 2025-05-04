@@ -6,13 +6,69 @@
 //
 
 import SwiftUI
+import WebKit
 
 // https://developer.apple.com/documentation/swiftui/outlinegroup
 // fenyo@mac ~ % snmpwalk -v2c -OT -OX -c public 192.168.0.254 > /tmp/snmpwalk.res
 
+extension String {
+    func ranges(of searchString: String) -> [Range<String.Index>] {
+        var ranges: [Range<String.Index>] = []
+        var startIndex = self.startIndex
+        
+        while startIndex < self.endIndex,
+              let range = self.range(of: searchString, options: .caseInsensitive, range: startIndex..<self.endIndex) {
+            ranges.append(range)
+            startIndex = range.upperBound
+        }
+        return ranges
+    }
+}
+
+struct HighlightedTextView: View {
+    let fullText: String
+    let highlight: String
+    let highlightColor: Color = .blue
+    let highlightBackgroundColor: Color = .yellow
+
+    init(_ fullText: String, highlight: String) {
+        self.fullText = fullText
+        self.highlight = highlight
+    }
+
+    var body: some View {
+        let lowercasedFullText = fullText.lowercased()
+        let lowercasedHighlight = highlight.lowercased()
+        
+        let ranges = lowercasedFullText.ranges(of: lowercasedHighlight)
+        
+        var highlightedText = Text("")
+        var currentIndex = fullText.startIndex
+        
+        for range in ranges {
+            let beforeRange = fullText[currentIndex..<range.lowerBound]
+            let highlightedRange = fullText[range]
+
+            var foo = AttributedString(String(highlightedRange))
+            foo.backgroundColor = highlightBackgroundColor
+            
+            highlightedText = highlightedText
+                + Text(String(beforeRange))
+                + Text(foo).foregroundColor(highlightColor)
+
+            currentIndex = range.upperBound
+        }
+        
+        highlightedText = highlightedText + Text(String(fullText[currentIndex...]))
+        
+        return highlightedText
+    }
+}
+
 struct OIDTreeView: View {
     @ObservedObject var node: OIDNodeDisplayable
-    
+    @Binding var highlight: String
+
     var body: some View {
         if node.children == nil || node.children?.isEmpty == true {
             // no child
@@ -30,20 +86,20 @@ struct OIDTreeView: View {
                 VStack {
                     HStack(alignment: .top) {
                         if node.children_backup?.isEmpty == false {
-                            Text(node.getDisplayValAndSubValues())
+                            HighlightedTextView(node.getDisplayValAndSubValues(), highlight: highlight)
                                 .font(.headline)
                                 .foregroundColor(.primary)
                             Spacer()
-                            Text(node.subnodes.last?.val ?? "")
+                            HighlightedTextView(node.subnodes.last?.val ?? "", highlight: highlight)
                                 .font(.headline)
                                 .foregroundColor(.primary)
                                 .multilineTextAlignment(.trailing)
                         } else {
-                            Text(node.getDisplayValAndSubValues())
+                            HighlightedTextView(node.getDisplayValAndSubValues(), highlight: highlight)
                                 .font(.subheadline)
                                 .foregroundColor(.secondary)
                             Spacer()
-                            Text(node.subnodes.last?.val ?? "")
+                            HighlightedTextView(node.subnodes.last?.val ?? "", highlight: highlight)
                                 .font(.subheadline)
                                 .foregroundColor(.red)
                                 .multilineTextAlignment(.trailing)
@@ -60,14 +116,14 @@ struct OIDTreeView: View {
             DisclosureGroup(isExpanded: $node.isExpanded, content: {
                 if let children = node.children {
                     ForEach(children) { child in
-                        OIDTreeView(node: child)
+                        OIDTreeView(node: child, highlight: $highlight)
                     }
                 }
             }) {
                 HStack {
                     Image(systemName: "folder")
                         .foregroundColor(.orange)
-                    Text(node.getDisplayValAndSubValues())
+                    HighlightedTextView(node.getDisplayValAndSubValues(), highlight: highlight)
                         .font(.headline)
                         .foregroundColor(.primary)
                 }
@@ -77,16 +133,16 @@ struct OIDTreeView: View {
 }
 
 struct ContentView: View {
-    @State private var filter: String = ""
-    @StateObject var rootNode: OIDNodeDisplayable
+   @StateObject var rootNode: OIDNodeDisplayable
+    @State private var highlight: String = ""
     
     var body: some View {
         VStack {
-            TextField("Entrez du texte ici", text: $filter)
+            TextField("Saisissez un filtre ici...", text: $highlight)
                 .autocorrectionDisabled(true)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
                 .padding()
-                .onChange(of: filter) { oldValue, newValue in
+                .onChange(of: highlight) { oldValue, newValue in
                     print("Texte saisi : \(newValue)")
 //                    rootNode.children?.first?.hide()
                     rootNode.expandAll()
@@ -111,7 +167,7 @@ struct ContentView: View {
                 }.border(.black)
             }
             List {
-                OIDTreeView(node: rootNode)
+                OIDTreeView(node: rootNode, highlight: $highlight)
             }
         }
     }
